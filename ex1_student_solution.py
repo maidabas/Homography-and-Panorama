@@ -74,10 +74,10 @@ class Solution:
         target_image = np.zeros(shape = dst_image_shape)
         for i in range(src_image.shape[0]):
             for j in range(src_image.shape[1]):
-                u = (np.matmul(homography[0, :], [i, j, 1])) / (np.matmul(homography[2, :], [i, j, 1]))
-                v = (np.matmul(homography[1, :], [i, j, 1])) / (np.matmul(homography[2, :], [i, j, 1]))
-                u, v = np.uint8(u), np.uint8(v)
-                target_image[u, v, :] = src_image[i, j, :]
+                new_coor = np.matmul(homography, [i, j, 1])
+                u = np.uint8(round(new_coor[0] /new_coor[2]))
+                v = np.uint8(round(new_coor[1] /new_coor[2]))
+                target_image[u, v, :] = src_image[i, j, :] / 255.0
         return target_image
 
     @staticmethod
