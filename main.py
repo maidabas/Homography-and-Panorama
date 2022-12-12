@@ -13,7 +13,7 @@ from ex1_student_solution import Solution
 # Don't forget to fill in your IDs!!!
 # students' IDs:
 ID1 = '123456789'
-ID2 = '987654321'
+ID2 = '313472417'
 ##########################################################
 
 
@@ -66,7 +66,7 @@ def main():
     forward_panorama_slow_plot = plt.imshow(transformed_image)
     plt.title('Forward Homography Slow implementation')
     plt.savefig('forward_homography_slow.png')
-    # plt.show()
+    plt.show()
 
     # Plot naive homography with forward mapping, fast implementation
     tt = time.time()
@@ -79,7 +79,7 @@ def main():
     plt.figure()
     forward_panorama_fast_plot = plt.imshow(transformed_image_fast)
     plt.title('Forward Homography Fast implementation')
-    # plt.show()
+    plt.show()
 
     # loading data with imperfect matches
     src_img, dst_img, match_p_src, match_p_dst = load_data(False)

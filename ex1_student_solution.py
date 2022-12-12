@@ -5,10 +5,8 @@ from typing import Tuple
 from random import sample
 from collections import namedtuple
 
-
 from numpy.linalg import svd
 from scipy.interpolate import griddata
-
 
 PadStruct = namedtuple('PadStruct',
                        ['pad_up', 'pad_down', 'pad_right', 'pad_left'])
@@ -16,6 +14,7 @@ PadStruct = namedtuple('PadStruct',
 
 class Solution:
     """Implement Projective Homography and Panorama Solution."""
+
     def __init__(self):
         pass
 
@@ -37,15 +36,17 @@ class Solution:
         N = match_p_src.shape[1]
         A = []
         for i in range(N):
-            row1 = [-match_p_src[0,i], -match_p_src[1,i], -1, 0, 0, 0, match_p_src[0,i]*match_p_dst[0,i], match_p_src[1,i]*match_p_dst[0,i], match_p_dst[0,i]]
-            row2 = [0, 0, 0, -match_p_src[0,i], -match_p_src[1,i], -1, match_p_src[0,i]*match_p_dst[1,i], match_p_src[1,i]*match_p_dst[1,i], match_p_dst[1,i]]
+            row1 = [-match_p_src[0, i], -match_p_src[1, i], -1, 0, 0, 0, match_p_src[0, i] * match_p_dst[0, i],
+                    match_p_src[1, i] * match_p_dst[0, i], match_p_dst[0, i]]
+            row2 = [0, 0, 0, -match_p_src[0, i], -match_p_src[1, i], -1, match_p_src[0, i] * match_p_dst[1, i],
+                    match_p_src[1, i] * match_p_dst[1, i], match_p_dst[1, i]]
             A.append(row1)
             A.append(row2)
         # Find eigenvalues using SVD process and choose the last eigenvalue as the holography matrix parameters
         u, s, vh = np.linalg.svd(A, full_matrices=True)
-        # Take last vector in vh and reshape it to be N x N:
-        vh = vh[-1:,].reshape((3,3))
-        return vh
+        # Take last vector in vh and reshape it to be 3 x 3:
+        homography = vh[-1:, ].reshape((3, 3))
+        return homography
 
     @staticmethod
     def compute_forward_homography_slow(
@@ -71,13 +72,14 @@ class Solution:
             The forward homography of the source image to its destination.
         """
         # return new_image
-        target_image = np.zeros(shape = dst_image_shape)
+        target_image = np.zeros(shape=dst_image_shape)
         for i in range(src_image.shape[0]):
             for j in range(src_image.shape[1]):
-                new_coor = np.matmul(homography, [i, j, 1])
-                u = np.uint8(round(new_coor[0] /new_coor[2]))
-                v = np.uint8(round(new_coor[1] /new_coor[2]))
-                target_image[u, v, :] = src_image[i, j, :] / 255.0
+                new_coor = np.matmul(homography, [j, i, 1])
+                u = np.round(new_coor[0] / new_coor[2]).astype(int)
+                v = np.round(new_coor[1] / new_coor[2]).astype(int)
+                if dst_image_shape[0] > v >= 0 and dst_image_shape[1] > u >= 0:
+                    target_image[v, u, :] = src_image[i, j, :] / 255.0
         return target_image
 
     @staticmethod
