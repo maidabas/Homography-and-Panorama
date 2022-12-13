@@ -166,16 +166,16 @@ class Solution:
         src_mapping = np.matmul(homography, np.vstack([match_p_src, np.ones(match_p_src.shape[1])]))  # add row of ones
         new_coor = src_mapping / src_mapping[2, :]  # normalize
         match_p_src_mapped = new_coor[:2, :]  # remove row of ones
-        # compare to matching destination points
-        dist = np.sum(np.abs(match_p_dst - match_p_src_mapped), axis=0)  # city-block distance for  maximum distance
+        # compare to matching destination points (using euclidean distance)
+        dist = np.array([np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
         inliers = (dist <= max_err)
 
         if sum(inliers) == 0:
             dist_mse = 10 ** 9
         else:
-            # calc mse only for inliers
-            dist_mse = (np.square(match_p_dst - match_p_src_mapped)).sum(axis=0)
-            dist_mse = dist_mse[inliers].mean()
+            # calc mse only for inliers only
+            dist_mse = np.square(np.subtract(match_p_dst[:, inliers],match_p_src_mapped[:, inliers])).mean()
+        # calc probability of an inlier
         fit_percent = inliers.sum() / match_p_src.shape[1]
         return (fit_percent, dist_mse)
 
@@ -204,9 +204,21 @@ class Solution:
             The second entry is the matching points form the destination
             image (shape 2xD; D as above).
         """
-        # return mp_src_meets_model, mp_dst_meets_model
+
         """INSERT YOUR CODE HERE"""
-        pass
+        # perform forward mapping of source image
+        src_mapping = np.matmul(homography, np.vstack([match_p_src, np.ones(match_p_src.shape[1])]))  # add row of ones
+        new_coor = src_mapping / src_mapping[2, :]  # normalize
+        match_p_src_mapped = new_coor[:2, :]  # remove row of ones   
+
+        # compare to matching destination points (using euclidean distance)
+        dist = np.array([np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
+        inliers = (dist <= max_err)
+
+        mp_src_meets_model = match_p_src[:, inliers] # extract inlier src points
+        mp_dst_meets_model = match_p_dst[:, inliers] # extract inlier dst points
+        
+        return mp_src_meets_model, mp_dst_meets_model 
 
     def compute_homography(self,
                            match_p_src: np.ndarray,

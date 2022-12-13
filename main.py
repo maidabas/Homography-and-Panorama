@@ -115,6 +115,9 @@ def main():
     print('Naive Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
 
+    # Run meet_the_model_points
+    mp_src_meets_model, mp_dst_meets_model = solution.meet_the_model_points(naive_homography,match_p_src,match_p_dst,max_err)
+
     # Compute RANSAC homography
     tt = tic()
     ransac_homography = solution.compute_homography(match_p_src,
@@ -124,6 +127,7 @@ def main():
     print('RANSAC Homography {:5.4f} sec'.format(toc(tt)))
     print(ransac_homography)
 
+    
     # Test RANSAC homography
     tt = tic()
     fit_percent, dist_mse = solution.test_homography(ransac_homography,
