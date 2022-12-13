@@ -113,27 +113,25 @@ class Solution:
         target_image = np.zeros(shape=dst_image_shape)
 
         # (1) Create a meshgrid of columns and rows.
-        H = dst_image_shape[0]
-        W = dst_image_shape[1]
+        H = src_image.shape[0]
+        W = src_image.shape[1]
         yv, xv = np.meshgrid(np.arange(W), np.arange(H), indexing='ij')
         # (2) Generate a matrix of size 3x(H*W) which stores the pixel locations in homogeneous coordinates.
-        coor_matrix = np.ones((3, H*W), dtype=int)
+        coor_matrix = np.ones((3, H * W), dtype=int)
         coor_matrix[0, :] = yv.flatten()
         coor_matrix[1, :] = xv.flatten()
+        src_row0 = coor_matrix[0, :]
+        src_row1 = coor_matrix[1, :]
         # (3) Transform the source homogeneous coordinates to the target homogeneous coordinates
         new_coor = np.matmul(homography, coor_matrix)
         # (4) normalization + round + clip
         new_coor = np.round(new_coor / new_coor[2, :]).astype(int)
         temp_row0 = new_coor[0, :]
         temp_row1 = new_coor[1, :]
-        cond1 = np.logical_and(temp_row0 < W,  temp_row0 >= 0)
-        cond2 = np.logical_and(temp_row1 < H,  temp_row1 >= 0)
+        cond1 = np.logical_and(temp_row0 < dst_image_shape[1], temp_row0 >= 0)  # within image bounds
+        cond2 = np.logical_and(temp_row1 < dst_image_shape[0], temp_row1 >= 0)  # within image bounds
         cond = np.logical_and(cond1, cond2)
         # (5) Plant the pixels from the source image to the target image
-        src_row0 = coor_matrix[0, :]
-        src_row1 = coor_matrix[1, :]
-        src_row0[cond] = 0
-        src_row1[cond] = 0
         target_image[temp_row1[cond == True], temp_row0[cond == True]] = src_image[src_row1[cond == True], src_row0[cond == True]] / 255.0
         return target_image
 
