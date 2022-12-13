@@ -31,7 +31,7 @@ class Solution:
             Homography from source to destination, 3x3 numpy array.
         """
         # return homography
-        """INSERT YOUR CODE HERE"""
+
         # Given - N matching points - meaning 2N rows in homography matrix (each row per x/y in each point)
         N = match_p_src.shape[1]
         A = []
@@ -132,7 +132,8 @@ class Solution:
         cond2 = np.logical_and(temp_row1 < dst_image_shape[0], temp_row1 >= 0)  # within image bounds
         cond = np.logical_and(cond1, cond2)
         # (5) Plant the pixels from the source image to the target image
-        target_image[temp_row1[cond == True], temp_row0[cond == True]] = src_image[src_row1[cond == True], src_row0[cond == True]] / 255.0
+        target_image[temp_row1[cond == True], temp_row0[cond == True]] = src_image[src_row1[cond == True], src_row0[
+            cond == True]] / 255.0
         return target_image
 
     @staticmethod
@@ -161,8 +162,22 @@ class Solution:
             return dist_mse = 10 ** 9.
         """
         # return fit_percent, dist_mse
-        """INSERT YOUR CODE HERE"""
-        pass
+        # compute forward mapping of source points
+        src_mapping = np.matmul(homography, np.vstack([match_p_src, np.ones(match_p_src.shape[1])]))  # add row of ones
+        new_coor = src_mapping / src_mapping[2, :]  # normalize
+        match_p_src_mapped = new_coor[:2, :]  # remove row of ones
+        # compare to matching destination points
+        dist = np.sum(np.abs(match_p_dst - match_p_src_mapped), axis=0)  # city-block distance for  maximum distance
+        inliers = (dist <= max_err)
+
+        if sum(inliers) == 0:
+            dist_mse = 10 ** 9
+        else:
+            # calc mse only for inliers
+            dist_mse = (np.square(match_p_dst - match_p_src_mapped)).sum(axis=0)
+            dist_mse = dist_mse[inliers].mean()
+        fit_percent = inliers.sum() / match_p_src.shape[1]
+        return (fit_percent, dist_mse)
 
     @staticmethod
     def meet_the_model_points(homography: np.ndarray,
