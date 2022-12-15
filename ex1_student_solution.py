@@ -322,24 +322,25 @@ class Solution:
         """INSERT YOUR CODE HERE"""
         # 1. create a meshgrid of shape of the dst image:
         yv, xv = np.meshgrid(np.arange(dst_image_shape[1]), np.arange(dst_image_shape[0]), indexing='ij')
-
-
         # 2. create a set of homogenous coordinates
         coor_matrix = np.ones((3,  dst_image_shape[0]* dst_image_shape[1]), dtype=int)
         coor_matrix[0, :] = yv.flatten()
         coor_matrix[1, :] = xv.flatten()
-        new_image1 = np.zeros((dst_image_shape[0], dst_image_shape[1], 3))
-
         # 3. Compute the corresponding coordinates in the source image using 
         # the backward projective homography
         new_coor = np.matmul(backward_projective_homography, coor_matrix)
-
-        ##### Stopped here #####
-
-
-
-
-        pass
+        # normalize:
+        new_coor = np.round(new_coor / new_coor[2, :]).astype(int)
+        pixel_locs_dst = np.transpose([new_coor[0], new_coor[1]])
+        # 4. create meshgrid of source image
+        xv_src, yv_src = np.meshgrid(np.arange(src_image.shape[0]), np.arange(src_image.shape[1]), indexing='ij')
+        pixel_locs_src = np.transpose([xv_src.flatten(), yv_src.flatten()])
+        pixel_values = src_image[pixel_locs_src[:,0], pixel_locs_src[:,1]]
+        # 5. compute interpolation for black points
+        new_image = griddata(pixel_locs_src, pixel_values,pixel_locs_dst, method='cubic', fill_value=0)
+        new_image = np.reshape(new_image, dst_image_shape)
+        new_image = np.clip(new_image, 0, 255).astype(np.uint8)
+        return new_image
 
     @staticmethod
     def find_panorama_shape(src_image: np.ndarray,
@@ -431,6 +432,7 @@ class Solution:
         """
         # return final_homography
         """INSERT YOUR CODE HERE"""
+
         pass
 
     def panorama(self,
@@ -474,4 +476,24 @@ class Solution:
         """
         # return np.clip(img_panorama, 0, 255).astype(np.uint8)
         """INSERT YOUR CODE HERE"""
+
+        # 1. compute forward homography
+        forward_homography = self.compute_homography(match_p_src, 
+                                                    match_p_dst,
+                                                    inliers_percent, 
+                                                    max_err)
+        # compute panorama shape
+        panorama_rows_num, panorama_cols_num, pad_struct = self.find_panorama_shape(src_image,
+                                                                                dst_image,
+                                                                                forward_homography)
+        # 2. copute backward homography
+        backward_homography = self.compute_homography(match_p_dst,
+                                                    match_p_src, 
+                                                    inliers_percent, 
+                                                    max_err)
+        # 3. add the appropriate translation
+        pad_left = None
+        pad_up = None
+        final_homography = self.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
+
         pass

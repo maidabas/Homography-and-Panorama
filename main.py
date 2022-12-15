@@ -135,6 +135,10 @@ def main():
     print('RANSAC Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
     
+    backward_projective_homography = ransac_homography                                                    
+    backwarded_image = solution.compute_backward_mapping(backward_projective_homography,
+            src_image=src_img,
+            dst_image_shape = dst_img.shape) 
 
     # Build panorama
     tt = tic()
