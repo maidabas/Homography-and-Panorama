@@ -323,21 +323,25 @@ class Solution:
         # 1. create a meshgrid of shape of the dst image:
         yv, xv = np.meshgrid(np.arange(dst_image_shape[1]), np.arange(dst_image_shape[0]), indexing='ij')
         # 2. create a set of homogenous coordinates
-        coor_matrix = np.ones((3,  dst_image_shape[0]* dst_image_shape[1]), dtype=int)
+        coor_matrix = np.ones((3,  dst_image_shape[0]* dst_image_shape[1]))
         coor_matrix[0, :] = yv.flatten()
         coor_matrix[1, :] = xv.flatten()
+        coor_matrix = coor_matrix.astype(int)
         # 3. Compute the corresponding coordinates in the source image using 
         # the backward projective homography
         new_coor = np.matmul(backward_projective_homography, coor_matrix)
         # normalize:
-        new_coor = np.round(new_coor / new_coor[2, :]).astype(int)
-        pixel_locs_dst = np.transpose([new_coor[0], new_coor[1]])
+        new_coor =new_coor / new_coor[2, :]
+        pixel_locs_dst = np.transpose([new_coor[1], new_coor[0]])
         # 4. create meshgrid of source image
-        xv_src, yv_src = np.meshgrid(np.arange(src_image.shape[0]), np.arange(src_image.shape[1]), indexing='ij')
+        yv_src, xv_src  = np.meshgrid(np.arange(src_image.shape[1]), np.arange(src_image.shape[0]), indexing='ij')
+        # get image values in pixal locations in source image
+        pixel_values = src_image[xv_src.flatten(), yv_src.flatten()]
         pixel_locs_src = np.transpose([xv_src.flatten(), yv_src.flatten()])
-        pixel_values = src_image[pixel_locs_src[:,0], pixel_locs_src[:,1]]
         # 5. compute interpolation for black points
-        new_image = griddata(pixel_locs_src, pixel_values,pixel_locs_dst, method='cubic', fill_value=0)
+        # new_image = np.zeros(dst_image_shape)
+        # new_image = np.clip(new_image, 0, 255).astype(np.uint8)
+        new_image = griddata(pixel_locs_src, pixel_values, pixel_locs_dst, method='cubic', fill_value=0).astype(int)
         new_image = np.reshape(new_image, dst_image_shape)
         new_image = np.clip(new_image, 0, 255).astype(np.uint8)
         return new_image
@@ -432,8 +436,13 @@ class Solution:
         """
         # return final_homography
         """INSERT YOUR CODE HERE"""
-
-        pass
+        # 1. Build the translation matrix: [[1, 0, dx], [0, 1, dy], [0, 0, 1]]
+        trans_matrix = np.array([[1, 0, -pad_left], [0, 1, -pad_up], [0, 0, 1]])
+        norm_trans_matrix =np.multiply(1/np.linalg.norm(trans_matrix), trans_matrix)
+        # 2. compose the translation and the homography matrix together
+        homography = np.matmul(backward_homography, norm_trans_matrix)
+        homography = np.multiply(1/np.linalg.norm(homography), homography)
+        return homography
 
     def panorama(self,
                  src_image: np.ndarray,
@@ -492,8 +501,19 @@ class Solution:
                                                     inliers_percent, 
                                                     max_err)
         # 3. add the appropriate translation
-        pad_left = None
-        pad_up = None
-        final_homography = self.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
+        pad_left = pad_struct.pad_left
+        pad_up = pad_struct.pad_up
+        translated_homography = self.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
+
+        # Create empty panorama image
+        panorama_empty = np.zeros((pad_struct.pad_left + panorama_rows_num + pad_struct.pad_right, pad_struct.pad_up + panorama_cols_num + pad_struct.pad_down, 3))
+
+        # compute backward image
+        backward_image = self.compute_backward_mapping(translated_homography, src_image, (panorama_empty.shape[0], panorama_empty.shape[1], 3))
+        # plant the backward image in the panorama 
+        
+
+
+
 
         pass

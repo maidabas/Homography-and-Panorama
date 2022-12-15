@@ -1,3 +1,4 @@
+
 import time
 import scipy.io
 import matplotlib.pyplot as plt
@@ -55,18 +56,19 @@ def main():
     print(naive_homography)
 
     # Plot naive homography with forward mapping, slow implementation
-    tt = time.time()
-    transformed_image = solution.compute_forward_homography_slow(
-        homography=naive_homography,
-        src_image=src_img,
-        dst_image_shape=dst_img.shape)
+    # tt = time.time()
+    # transformed_image = solution.compute_forward_homography_slow(
+    #     homography=naive_homography,
+    #     src_image=src_img,
+    #     dst_image_shape=dst_img.shape)
 
-    print('Naive Homography Slow computation takes {:5.4f} sec'.format(toc(tt)))
-    plt.figure()
-    forward_panorama_slow_plot = plt.imshow(transformed_image)
-    plt.title('Forward Homography Slow implementation')
-    plt.savefig('forward_homography_slow.png')
-    plt.show()
+    # print('Naive Homography Slow computation takes {:5.4f} sec'.format(toc(tt)))
+    # plt.figure()
+    # forward_panorama_slow_plot = plt.imshow(transformed_image)
+    # plt.title('Forward Homography Slow implementation')
+    # plt.savefig('forward_homography_slow.png')
+    # plt.show()
+
 
     # Plot naive homography with forward mapping, fast implementation
     tt = time.time()
@@ -80,6 +82,7 @@ def main():
     forward_panorama_fast_plot = plt.imshow(transformed_image_fast)
     plt.title('Forward Homography Fast implementation')
     plt.show()
+
 
     # loading data with imperfect matches
     src_img, dst_img, match_p_src, match_p_dst = load_data(False)
@@ -134,12 +137,20 @@ def main():
                                                      max_err)
     print('RANSAC Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
-    
-    backward_projective_homography = ransac_homography                                                    
-    backwarded_image = solution.compute_backward_mapping(backward_projective_homography,
+
+    import numpy as np
+    backward_homography = np.linalg.inv(ransac_homography)
+
+    backwarded_image = solution.compute_backward_mapping(backward_homography,
             src_image=src_img,
             dst_image_shape = dst_img.shape) 
 
+
+    # check add_translation_to_backward_homography func:
+    pad_left = src_img.shape[0]
+    pad_up = src_img.shape[1]
+
+    trans_homography = solution.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
     # Build panorama
     tt = tic()
     img_pan = solution.panorama(src_img,
