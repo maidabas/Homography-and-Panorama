@@ -46,7 +46,7 @@ def main():
     max_err = 25
     inliers_percent = 0.8
     # loading data with perfect matches
-    src_img, dst_img, match_p_src, match_p_dst = load_data()
+    src_img, dst_img, match_p_src, match_p_dst = load_data(True)
     # Compute naive homography
     tt = time.time()
     naive_homography = solution.compute_homography_naive(match_p_src,
@@ -115,8 +115,6 @@ def main():
     print('Naive Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
 
-    # Run meet_the_model_points
-    mp_src_meets_model, mp_dst_meets_model = solution.meet_the_model_points(naive_homography,match_p_src,match_p_dst,max_err)
 
     # Compute RANSAC homography
     tt = tic()
@@ -136,6 +134,7 @@ def main():
                                                      max_err)
     print('RANSAC Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
+    
 
     # Build panorama
     tt = tic()

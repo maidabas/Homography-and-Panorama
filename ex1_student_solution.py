@@ -252,7 +252,45 @@ class Solution:
         # k = int(np.ceil(np.log(1 - p) / np.log(1 - w ** n))) + 1
         # return homography
         """INSERT YOUR CODE HERE"""
-        pass
+
+        # Define class notations
+        w = inliers_percent
+        t = max_err
+        p = 0.99 # probability of the algorithm to secceed
+        d = 0.5 # minimal probability of points which meets the model
+        n = 4 # number of points sufficient to compute the model
+        k = int(np.ceil(np.log(1 - p) / np.log(1 - w ** n))) + 1 # no. of iterations (+1)
+        err = np.inf # stores the model error
+        # loop over number of iterations
+        for i in range(k):
+             # randomly select n points
+             choose_index = np.random.choice(match_p_src.shape[1], size=n, replace=False)
+             chosen_p_src = match_p_src[:, choose_index]
+             chosen_p_dst = match_p_dst[:, choose_index]
+
+             # compute homography based on chosen points (using the )
+             homography_test = self.compute_homography_naive(chosen_p_src, chosen_p_dst)
+
+             # Find inliers
+             inliers_src, inliers_dst = self.meet_the_model_points(homography_test, 
+                                                                        match_p_src, 
+                                                                        match_p_dst,
+                                                                        max_err=t)
+            
+             # Check d condition
+             if inliers_src.shape[1] / match_p_src.shape[1] > d:
+                # re-compute model using all founded inliers
+                homography_inliers = self.compute_homography_naive(inliers_src, inliers_dst)
+                # compute model error
+                _, model_err = self.test_homography(homography_inliers, match_p_src, match_p_dst, t)
+                # check if the model has improved from last iteration
+                if model_err < err:
+                    # if so - store the error and the model
+                    err = model_err
+                    homography = homography_inliers
+        if err >= np.inf:
+            return ("High error, model wasn't saved")
+        return homography
 
     @staticmethod
     def compute_backward_mapping(
@@ -282,6 +320,25 @@ class Solution:
 
         # return backward_warp
         """INSERT YOUR CODE HERE"""
+        # 1. create a meshgrid of shape of the dst image:
+        yv, xv = np.meshgrid(np.arange(dst_image_shape[1]), np.arange(dst_image_shape[0]), indexing='ij')
+
+
+        # 2. create a set of homogenous coordinates
+        coor_matrix = np.ones((3,  dst_image_shape[0]* dst_image_shape[1]), dtype=int)
+        coor_matrix[0, :] = yv.flatten()
+        coor_matrix[1, :] = xv.flatten()
+        new_image1 = np.zeros((dst_image_shape[0], dst_image_shape[1], 3))
+
+        # 3. Compute the corresponding coordinates in the source image using 
+        # the backward projective homography
+        new_coor = np.matmul(backward_projective_homography, coor_matrix)
+
+        ##### Stopped here #####
+
+
+
+
         pass
 
     @staticmethod
