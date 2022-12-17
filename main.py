@@ -138,13 +138,31 @@ def main():
     print('RANSAC Homography Test {:5.4f} sec'.format(toc(tt)))
     print([fit_percent, dist_mse])
 
+    # Plot naive homography with forward mapping, fast implementation for
+    # imperfect matches
+    tt = time.time()
+    transformed_image_fast = solution.compute_forward_homography_fast(
+        homography=ransac_homography,
+        src_image=src_img,
+        dst_image_shape=dst_img.shape)
+
+    print('Naive Homography Fast computation using RANSAC takes '
+          '{:5.4f} sec'.format(toc(tt)))
+    plt.figure()
+    forward_panorama_imperfect_matches_plot = plt.imshow(transformed_image_fast)
+    plt.title('Forward Panorama using RANSAC')
+    plt.show()
+
     import numpy as np
     backward_homography = np.linalg.inv(ransac_homography)
 
     backwarded_image = solution.compute_backward_mapping(backward_homography,
-            src_image=src_img,
-            dst_image_shape = dst_img.shape) 
+                                                         src_image=src_img)
 
+    plt.figure()
+    backwarded_image_plot = plt.imshow(backwarded_image)
+    plt.title('Backward wrap imperfect matches using RANSAC')
+    plt.show()
 
     # check add_translation_to_backward_homography func:
     pad_left = src_img.shape[0]

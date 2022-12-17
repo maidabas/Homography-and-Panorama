@@ -167,14 +167,15 @@ class Solution:
         new_coor = src_mapping / src_mapping[2, :]  # normalize
         match_p_src_mapped = new_coor[:2, :]  # remove row of ones
         # compare to matching destination points (using euclidean distance)
-        dist = np.array([np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
+        dist = np.array(
+            [np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
         inliers = (dist <= max_err)
 
         if sum(inliers) == 0:
             dist_mse = 10 ** 9
         else:
             # calc mse only for inliers only
-            dist_mse = np.square(np.subtract(match_p_dst[:, inliers],match_p_src_mapped[:, inliers])).mean()
+            dist_mse = np.square(np.subtract(match_p_dst[:, inliers], match_p_src_mapped[:, inliers])).mean()
         # calc probability of an inlier
         fit_percent = inliers.sum() / match_p_src.shape[1]
         return (fit_percent, dist_mse)
@@ -212,13 +213,14 @@ class Solution:
         match_p_src_mapped = new_coor[:2, :]  # remove row of ones   
 
         # compare to matching destination points (using euclidean distance)
-        dist = np.array([np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
+        dist = np.array(
+            [np.linalg.norm(match_p_dst[:, i] - match_p_src_mapped[:, i]) for i in range(match_p_dst.shape[1])])
         inliers = (dist <= max_err)
 
-        mp_src_meets_model = match_p_src[:, inliers] # extract inlier src points
-        mp_dst_meets_model = match_p_dst[:, inliers] # extract inlier dst points
-        
-        return mp_src_meets_model, mp_dst_meets_model 
+        mp_src_meets_model = match_p_src[:, inliers]  # extract inlier src points
+        mp_dst_meets_model = match_p_dst[:, inliers]  # extract inlier dst points
+
+        return mp_src_meets_model, mp_dst_meets_model
 
     def compute_homography(self,
                            match_p_src: np.ndarray,
@@ -256,29 +258,29 @@ class Solution:
         # Define class notations
         w = inliers_percent
         t = max_err
-        p = 0.99 # probability of the algorithm to secceed
-        d = 0.5 # minimal probability of points which meets the model
-        n = 4 # number of points sufficient to compute the model
-        k = int(np.ceil(np.log(1 - p) / np.log(1 - w ** n))) + 1 # no. of iterations (+1)
-        err = np.inf # stores the model error
+        p = 0.99  # probability of the algorithm to secceed
+        d = 0.5  # minimal probability of points which meets the model
+        n = 4  # number of points sufficient to compute the model
+        k = int(np.ceil(np.log(1 - p) / np.log(1 - w ** n))) + 1  # no. of iterations (+1)
+        err = np.inf  # stores the model error
         # loop over number of iterations
         for i in range(k):
-             # randomly select n points
-             choose_index = np.random.choice(match_p_src.shape[1], size=n, replace=False)
-             chosen_p_src = match_p_src[:, choose_index]
-             chosen_p_dst = match_p_dst[:, choose_index]
+            # randomly select n points
+            choose_index = np.random.choice(match_p_src.shape[1], size=n, replace=False)
+            chosen_p_src = match_p_src[:, choose_index]
+            chosen_p_dst = match_p_dst[:, choose_index]
 
-             # compute homography based on chosen points (using the )
-             homography_test = self.compute_homography_naive(chosen_p_src, chosen_p_dst)
+            # compute homography based on chosen points (using the )
+            homography_test = self.compute_homography_naive(chosen_p_src, chosen_p_dst)
 
-             # Find inliers
-             inliers_src, inliers_dst = self.meet_the_model_points(homography_test, 
-                                                                        match_p_src, 
-                                                                        match_p_dst,
-                                                                        max_err=t)
-            
-             # Check d condition
-             if inliers_src.shape[1] / match_p_src.shape[1] > d:
+            # Find inliers
+            inliers_src, inliers_dst = self.meet_the_model_points(homography_test,
+                                                                  match_p_src,
+                                                                  match_p_dst,
+                                                                  max_err=t)
+
+            # Check d condition
+            if inliers_src.shape[1] / match_p_src.shape[1] > d:
                 # re-compute model using all founded inliers
                 homography_inliers = self.compute_homography_naive(inliers_src, inliers_dst)
                 # compute model error
@@ -321,26 +323,26 @@ class Solution:
         # return backward_warp
         """INSERT YOUR CODE HERE"""
         # 1. create a meshgrid of shape of the dst image:
-        yv, xv = np.meshgrid(np.arange(dst_image_shape[1]), np.arange(dst_image_shape[0]), indexing='ij')
+        yv, xv = np.meshgrid(np.arange(dst_image_shape[1]), np.arange(dst_image_shape[0]))
         # 2. create a set of homogenous coordinates
-        coor_matrix = np.ones((3,  dst_image_shape[0]* dst_image_shape[1]))
+        coor_matrix = np.ones((3, dst_image_shape[0] * dst_image_shape[1]))
         coor_matrix[0, :] = yv.flatten()
         coor_matrix[1, :] = xv.flatten()
         coor_matrix = coor_matrix.astype(int)
-        # 3. Compute the corresponding coordinates in the source image using 
+        # 3. Compute the corresponding coordinates in the source image using
         # the backward projective homography
         new_coor = np.matmul(backward_projective_homography, coor_matrix)
         # normalize:
-        new_coor =new_coor / new_coor[2, :]
-        pixel_locs_dst = np.transpose([new_coor[1], new_coor[0]])
+        new_coor = new_coor / new_coor[2, :]
+        pixel_locs_dst = np.transpose([new_coor[1, :], new_coor[0, :]])
         # 4. create meshgrid of source image
-        yv_src, xv_src  = np.meshgrid(np.arange(src_image.shape[1]), np.arange(src_image.shape[0]), indexing='ij')
-        # get image values in pixal locations in source image
-        pixel_values = src_image[xv_src.flatten(), yv_src.flatten()]
-        pixel_locs_src = np.transpose([xv_src.flatten(), yv_src.flatten()])
+        yv_src, xv_src = np.meshgrid(np.arange(src_image.shape[1]), np.arange(src_image.shape[0]))
+        # get image values in pixel locations in source image
+        xv_src = xv_src.flatten().astype(int)
+        yv_src = yv_src.flatten().astype(int)
+        pixel_values = src_image[xv_src, yv_src]
+        pixel_locs_src = np.transpose([xv_src, yv_src])
         # 5. compute interpolation for black points
-        # new_image = np.zeros(dst_image_shape)
-        # new_image = np.clip(new_image, 0, 255).astype(np.uint8)
         new_image = griddata(pixel_locs_src, pixel_values, pixel_locs_dst, method='cubic', fill_value=0).astype(int)
         new_image = np.reshape(new_image, dst_image_shape)
         new_image = np.clip(new_image, 0, 255).astype(np.uint8)
@@ -438,10 +440,10 @@ class Solution:
         """INSERT YOUR CODE HERE"""
         # 1. Build the translation matrix: [[1, 0, dx], [0, 1, dy], [0, 0, 1]]
         trans_matrix = np.array([[1, 0, -pad_left], [0, 1, -pad_up], [0, 0, 1]])
-        norm_trans_matrix =np.multiply(1/np.linalg.norm(trans_matrix), trans_matrix)
+        norm_trans_matrix = np.multiply(1 / np.linalg.norm(trans_matrix), trans_matrix)
         # 2. compose the translation and the homography matrix together
         homography = np.matmul(backward_homography, norm_trans_matrix)
-        homography = np.multiply(1/np.linalg.norm(homography), homography)
+        homography = np.multiply(1 / np.linalg.norm(homography), homography)
         return homography
 
     def panorama(self,
@@ -486,34 +488,36 @@ class Solution:
         # return np.clip(img_panorama, 0, 255).astype(np.uint8)
         """INSERT YOUR CODE HERE"""
 
-        # 1. compute forward homography
-        forward_homography = self.compute_homography(match_p_src, 
-                                                    match_p_dst,
-                                                    inliers_percent, 
-                                                    max_err)
+        # 1. compute forward homography src -> dst
+        forward_homography = self.compute_homography(match_p_src,
+                                                     match_p_dst,
+                                                     inliers_percent,
+                                                     max_err)
         # compute panorama shape
         panorama_rows_num, panorama_cols_num, pad_struct = self.find_panorama_shape(src_image,
-                                                                                dst_image,
-                                                                                forward_homography)
-        # 2. copute backward homography
-        backward_homography = self.compute_homography(match_p_dst,
-                                                    match_p_src, 
-                                                    inliers_percent, 
-                                                    max_err)
+                                                                                    dst_image,
+                                                                                    forward_homography)
+        # 2. compute backward homography dst -> src
+        backward_homography = np.linalg.inv(forward_homography)
+        # backward_homography = self.compute_homography(match_p_dst,
+        #                                            match_p_src,
+        #                                            inliers_percent,
+        #                                            max_err)
         # 3. add the appropriate translation
         pad_left = pad_struct.pad_left
         pad_up = pad_struct.pad_up
         translated_homography = self.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
 
         # Create empty panorama image
-        panorama_empty = np.zeros((pad_struct.pad_left + panorama_rows_num + pad_struct.pad_right, pad_struct.pad_up + panorama_cols_num + pad_struct.pad_down, 3))
+        panorama_empty = np.zeros((pad_struct.pad_left + panorama_rows_num + pad_struct.pad_right,
+                                   pad_struct.pad_up + panorama_cols_num + pad_struct.pad_down, 3))
+        panorama_empty[0:dst_image.shape[0], 0:dst_image.shape[1], :] = dst_image
 
         # compute backward image
-        backward_image = self.compute_backward_mapping(translated_homography, src_image, (panorama_empty.shape[0], panorama_empty.shape[1], 3))
-        # plant the backward image in the panorama 
-        
+        backward_image = self.compute_backward_mapping(translated_homography, src_image,
+                                                       (panorama_empty.shape[0], panorama_empty.shape[1], 3))
 
+        # plant the backward image in the panorama
+        img_panorama = np.where(panorama_empty.round() == 0, backward_image, panorama_empty)
 
-
-
-        pass
+        return np.clip(img_panorama, 0, 255).astype(np.uint8)
