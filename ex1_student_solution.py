@@ -509,9 +509,10 @@ class Solution:
         translated_homography = self.add_translation_to_backward_homography(backward_homography, pad_left, pad_up)
 
         # Create empty panorama image
-        panorama_empty = np.zeros((pad_struct.pad_left + panorama_rows_num + pad_struct.pad_right,
-                                   pad_struct.pad_up + panorama_cols_num + pad_struct.pad_down, 3))
-        panorama_empty[0:dst_image.shape[0], 0:dst_image.shape[1], :] = dst_image
+        panorama_empty = np.zeros((panorama_rows_num,
+                                   panorama_cols_num, 3))
+        # plant the dst image in the panorama
+        panorama_empty[pad_up:pad_up+dst_image.shape[0], pad_left:pad_left+dst_image.shape[1], :] = dst_image
 
         # compute backward image
         backward_image = self.compute_backward_mapping(translated_homography, src_image,
