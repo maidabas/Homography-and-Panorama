@@ -183,7 +183,6 @@ def main():
     plt.figure()
     course_panorama_plot = plt.imshow(img_pan)
     plt.title('Great Panorama')
-    # plt.show()
     plt.show()
 
 
@@ -191,7 +190,7 @@ def your_images_loader():
     src_img_test = mpimg.imread('src_test.jpg')
     dst_img_test = mpimg.imread('dst_test.jpg')
 
-    DECIMATION_FACTOR = 5.0
+    DECIMATION_FACTOR = 2.0
     src_img_test = resize(src_img_test,
                           dsize=(int(src_img_test.shape[1]/DECIMATION_FACTOR),
                                  int(src_img_test.shape[0]/DECIMATION_FACTOR)),
@@ -209,6 +208,7 @@ def your_images_loader():
     match_p_dst /= DECIMATION_FACTOR
     match_p_src /= DECIMATION_FACTOR
     return src_img_test, dst_img_test, match_p_src, match_p_dst
+
 
 
 def your_images_main():
@@ -257,6 +257,7 @@ def your_images_main():
     plt.title('Awesome Panorama')
     # plt.show()
 
+    # Add 
     # Build reversed student panorama
     tt = tic()
     img_pan2 = solution.panorama(dst_img_test, src_img_test, match_p_dst,

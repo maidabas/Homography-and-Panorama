@@ -499,10 +499,7 @@ class Solution:
                                                                                     forward_homography)
         # 2. compute backward homography dst -> src
         backward_homography = np.linalg.inv(forward_homography)
-        # backward_homography = self.compute_homography(match_p_dst,
-        #                                            match_p_src,
-        #                                            inliers_percent,
-        #                                            max_err)
+
         # 3. add the appropriate translation
         pad_left = pad_struct.pad_left
         pad_up = pad_struct.pad_up
